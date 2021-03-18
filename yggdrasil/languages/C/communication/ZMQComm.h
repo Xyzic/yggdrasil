@@ -710,7 +710,7 @@ int new_zmq_address(comm_t *comm) {
 static inline
 int init_zmq_comm(comm_t *comm) {
   int ret = -1;
-  if (comm->valid == 0)
+  if (!(comm->flags & COMM_FLAG_VALID))
     return ret;
   comm->msgBufSize = 100;
   zsock_t *s;
@@ -752,7 +752,7 @@ int free_zmq_comm(comm_t *x) {
   if (x == NULL)
     return ret;
   // Drain input
-  if ((is_recv(x->direction)) && (x->valid == 1)) {
+  if ((is_recv(x->direction)) && (x->flags & COMM_FLAG_VALID)) {
     if (_ygg_error_flag == 0) {
       size_t data_len = 100;
       char *data = (char*)malloc(data_len);

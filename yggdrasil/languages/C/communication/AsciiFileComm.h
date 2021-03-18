@@ -38,7 +38,7 @@ int init_ascii_file_comm(comm_t *comm) {
   int ret = af_open(handle);
   if (ret != 0) {
     ygglog_error("init_ascii_file_comm: Could not open %s", comm->name);
-    comm->valid = 0;
+    comm->flags = comm->flags & ~COMM_FLAG_VALID;
   }
   return ret;
 };

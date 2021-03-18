@@ -52,7 +52,7 @@ int init_ascii_table_comm(comm_t *comm) {
   flag = at_open(handle);
   if (flag != 0) {
     ygglog_error("init_ascii_table_comm: Could not open %s", comm->name);
-    comm->valid = 0;
+    comm->flags = comm->flags & ~COMM_FLAG_VALID;
     return -1;
   }
   // Write format to file if "send"

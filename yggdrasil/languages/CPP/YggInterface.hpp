@@ -34,7 +34,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggInput(yggInput_t x) : _pi(x) {
-    if (!(_pi->valid)) {
+    if (!(_pi->flags & COMM_FLAG_VALID)) {
       throw "Error initializing the comm";
     }
   }
@@ -240,7 +240,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggOutput(yggOutput_t x) : _pi(x) {
-    if (!(_pi->valid)) {
+    if (!(_pi->flags & COMM_FLAG_VALID)) {
       throw "Error initializing the comm";
     }
   }
@@ -346,7 +346,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggRpc(yggRpc_t x) : _pi(x) {
-    if (!(_pi->valid)) {
+    if (!(_pi->flags & COMM_FLAG_VALID)) {
       throw "Error initializing the comm";
     }
   }
