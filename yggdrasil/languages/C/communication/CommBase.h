@@ -9,27 +9,6 @@
 extern "C" {
 #endif
 
-
-/*! @brief Bit flags. */
-#define COMM_FLAG_VALID   0x00000001  //!< Set if the comm is initialized
-#define COMM_FLAG_GLOBAL  0x00000002  //!< Set if the comm is global
-#define COMM_FLAG_FILE    0x00000004  //!< Set if the comm connects to a file
-#define COMM_FLAG_WORKER  0x00000008  //!< Set if the comm is a work comm
-#define COMM_FLAG_CLIENT  0x00000010  //!< Set if the comm is a client
-#define COMM_FLAG_SERVER  0x00000020  //!< Set if the comm is a server
-#define COMM_FLAG_CLIENT_RESPONSE 0x00000040 //!< Set if the comm is a client response comm
-#define COMM_ALWAYS_SEND_HEADER   0x00000080 //!< Set if the comm should always include a header in messages
-#define COMM_ALLOW_MULTIPLE_COMMS 0x00000100 //!< Set if the comm should connect in a way that allow multiple connections
-
-/*! @brief Bit flags that can be set for const comm */
-#define COMM_FLAGS_USED   0x00000001  //!< Set if the comm has been used
-#define COMM_EOF_SENT     0x00000002  //!< Set if EOF has been sent
-#define COMM_EOF_RECV     0x00000004  //!< Set if EOF has been received
-  
-/*! @brief Set if the comm is the receiving comm for a client/server request connection */
-#define COMM_FLAG_RPC     COMM_FLAG_SERVER | COMM_FLAG_CLIENT
-
-
 /*! @brief Communicator types. */
 enum comm_enum { NULL_COMM, IPC_COMM, ZMQ_COMM,
 		 SERVER_COMM, CLIENT_COMM,
@@ -48,17 +27,27 @@ typedef struct comm_t {
   char name[COMM_NAME_SIZE]; //!< Comm name.
   char address[COMM_ADDRESS_SIZE]; //!< Comm address.
   char direction[COMM_DIR_SIZE]; //!< send or recv for direction messages will go.
-  int flags; //!< Flags describing the status of the comm.
-  int *const_flags;  //!< Flags describing the status of the comm that can be est for const.
+  int valid; //!< 1 if communicator initialized, 0 otherwise.
   void *handle; //!< Pointer to handle for comm.
   void *info; //!< Pointer to any extra info comm requires.
   dtype_t *datatype; //!< Data type for comm messages.
   size_t maxMsgSize; //!< The maximum message size.
   size_t msgBufSize; //!< The size that should be reserved in messages.
+  int always_send_header; //!< 1 if comm should always send a header.
   int index_in_register; //!< Index of the comm in the comm register.
   time_t *last_send; //!< Clock output at time of last send.
+  int *sent_eof; //!< Flag specifying if EOF has been sent
+  int *recv_eof; //!< Flag specifying if EOF has been received.
+  int *used; //!< Flag specifying if the comm has been used.
   void *reply; //!< Reply information.
+  int is_file; //!< Flag specifying if the comm connects directly to a file.
+  int is_work_comm; //!< Flag specifying if comm is a temporary work comm.
+  int is_rpc; //!< Flag specifying if comm is the receiving comm for a client/server request connection.
+  int is_global; //!< Flag specifying if the comm is global.
   int thread_id; //!< ID for the thread that created the comm.
+  int allow_multiple_comms;
+  int is_client;
+  int is_client_response;
 } comm_t;
 
 
@@ -85,15 +74,23 @@ int free_comm_base(comm_t *x) {
     free(x->last_send);
     x->last_send = NULL;
   }
-  if (x->const_flags != NULL) {
-    free(x->const_flags);
-    x->const_flags = NULL;
+  if (x->sent_eof != NULL) {
+    free(x->sent_eof);
+    x->sent_eof = NULL;
+  }
+  if (x->recv_eof != NULL) {
+    free(x->recv_eof);
+    x->recv_eof = NULL;
+  }
+  if (x->used != NULL) {
+    free(x->used);
+    x->used = NULL;
   }
   if (x->datatype != NULL) {
     destroy_dtype(&(x->datatype));
     x->datatype = NULL;
   }
-  x->flags = 0;
+  x->valid = 0;
   x->name[0] = '\0';
   x->index_in_register = -1;
   ygglog_debug("free_comm_base: Finished");
@@ -112,16 +109,27 @@ comm_t empty_comm_base() {
   ret.name[0] = '\0';
   ret.address[0] = '\0';
   ret.direction[0] = '\0';
-  ret.flags = COMM_ALWAYS_SEND_HEADER;
+  ret.valid = 0;
   ret.handle = NULL;
   ret.info = NULL;
   ret.datatype = NULL;
   ret.maxMsgSize = 0;
   ret.msgBufSize = 0;
+  ret.always_send_header = 1;
   ret.index_in_register = -1;
   ret.last_send = NULL;
+  ret.sent_eof = NULL;
+  ret.recv_eof = NULL;
+  ret.used = NULL;
   ret.reply = NULL;
+  ret.is_file = 0;
+  ret.is_work_comm = 0;
+  ret.is_rpc = 0;
+  ret.is_global = 0;
   ret.thread_id = 0;
+  ret.allow_multiple_comms = 0;
+  ret.is_client = 0;
+  ret.is_client_response = 0;
   return ret;
 };
 
@@ -144,11 +152,11 @@ comm_t* new_comm_base(char *address, const char *direction,
   }
   ret[0] = empty_comm_base();
   ret->type = t;
-  ret->flags = ret->flags | COMM_FLAG_VALID;
+  ret->valid = 1;
   if (address != NULL)
     strncpy(ret->address, address, COMM_ADDRESS_SIZE);
   if (direction == NULL) {
-    ret->flags = ret->flags & ~COMM_FLAG_VALID;
+    ret->valid = 0;
   } else {
     strncpy(ret->direction, direction, COMM_DIR_SIZE);
   }
@@ -165,18 +173,33 @@ comm_t* new_comm_base(char *address, const char *direction,
     free_comm_base(ret);
     return NULL;
   }
-  ret->const_flags = (int*)malloc(sizeof(int));
-  if (ret->const_flags == NULL) {
-    ygglog_error("new_comm_base: Error mallocing const_flags.");
+  ret->sent_eof = (int*)malloc(sizeof(int));
+  if (ret->sent_eof == NULL) {
+    ygglog_error("new_comm_base: Error mallocing sent_eof.");
+    free_comm_base(ret);
+    return NULL;
+  }
+  ret->recv_eof = (int*)malloc(sizeof(int));
+  if (ret->recv_eof == NULL) {
+    ygglog_error("new_comm_base: Error mallocing recv_eof.");
+    free_comm_base(ret);
+    return NULL;
+  }
+  ret->used = (int*)malloc(sizeof(int));
+  if (ret->used == NULL) {
+    ygglog_error("new_comm_base: Error mallocing used.");
     free_comm_base(ret);
     return NULL;
   }
   ret->last_send[0] = 0;
-  ret->const_flags[0] = 0;
+  ret->sent_eof[0] = 0;
+  ret->recv_eof[0] = 0;
+  ret->used[0] = 0;
   ret->thread_id = get_thread_id();
+  ret->allow_multiple_comms = 0;
   char *allow_threading = getenv("YGG_THREADING");
   if (allow_threading != NULL) {
-    ret->flags = ret->flags | COMM_ALLOW_MULTIPLE_COMMS;
+    ret->allow_multiple_comms = 1;
   }
   return ret;
 };
@@ -239,14 +262,14 @@ comm_t* init_comm_base(const char *name, const char *direction,
     return ret;
   }
   if (name == NULL) {
-    ret->flags = ret->flags & ~COMM_FLAG_VALID;
+    ret->valid = 0;
   } else {
     strncpy(ret->name, full_name, COMM_NAME_SIZE);
   }
   if ((strlen(ret->address) == 0) && (t != SERVER_COMM) && (t != CLIENT_COMM)) {
     ygglog_error("init_comm_base: %s not registered as environment variable.\n",
 		 full_name);
-    ret->flags = ret->flags & ~COMM_FLAG_VALID;
+    ret->valid = 0;
   }
   ygglog_debug("init_comm_base(%s): Done", ret->name);
   return ret;

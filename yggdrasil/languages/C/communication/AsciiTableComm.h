@@ -22,7 +22,7 @@ static inline
 int init_ascii_table_comm(comm_t *comm) {
   int flag = 0;
   // Don't check base validity since address is name
-  comm->flags = comm->flags | COMM_FLAG_FILE;
+  comm->is_file = 1;
   comm->type = ASCII_TABLE_COMM;
   strcpy(comm->address, comm->name);
   // Initialize table as handle
@@ -52,7 +52,7 @@ int init_ascii_table_comm(comm_t *comm) {
   flag = at_open(handle);
   if (flag != 0) {
     ygglog_error("init_ascii_table_comm: Could not open %s", comm->name);
-    comm->flags = comm->flags & ~COMM_FLAG_VALID;
+    comm->valid = 0;
     return -1;
   }
   // Write format to file if "send"

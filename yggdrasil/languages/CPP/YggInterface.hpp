@@ -34,7 +34,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggInput(yggInput_t x) : _pi(x) {
-    if (!(_pi->flags & COMM_FLAG_VALID)) {
+    if (!(_pi->valid)) {
       throw "Error initializing the comm";
     }
   }
@@ -77,7 +77,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
+    if (!(_pi->is_global)) {
       ygg_free(_pi);
     }
     _pi = NULL;
@@ -240,7 +240,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggOutput(yggOutput_t x) : _pi(x) {
-    if (!(_pi->flags & COMM_FLAG_VALID)) {
+    if (!(_pi->valid)) {
       throw "Error initializing the comm";
     }
   }
@@ -249,7 +249,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
+    if (!(_pi->is_global)) {
       ygg_free(_pi);
     }
     _pi = NULL;
@@ -346,7 +346,7 @@ public:
 
   /*! @brief Empty constructor for inheritance. */
   YggRpc(yggRpc_t x) : _pi(x) {
-    if (!(_pi->flags & COMM_FLAG_VALID)) {
+    if (!(_pi->valid)) {
       throw "Error initializing the comm";
     }
   }
@@ -355,7 +355,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
+    if (!(_pi->is_global)) {
       ygg_free(_pi);
     }
     _pi = NULL;

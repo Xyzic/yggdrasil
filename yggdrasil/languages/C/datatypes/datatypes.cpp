@@ -185,9 +185,9 @@ bool update_header_from_doc(comm_head_t &head, rapidjson::Value &head_doc) {
   }
   head.size = (size_t)(head_doc["size"].GetInt());
   if (head.bodysiz < head.size) {
-    head.flags = head.flags | HEAD_FLAG_MULTIPART;
+    head.multipart = 1;
   } else {
-    head.flags = head.flags & ~HEAD_FLAG_MULTIPART;
+    head.multipart = 0;
   }
   // Flag specifying that type is in data
   if (head_doc.HasMember("type_in_data")) {
@@ -196,9 +196,9 @@ bool update_header_from_doc(comm_head_t &head, rapidjson::Value &head_doc) {
       return false;
     }
     if (head_doc["type_in_data"].GetBool()) {
-      head.flags = head.flags | HEAD_TYPE_IN_DATA;
+      head.type_in_data = 1;
     } else {
-      head.flags = head.flags & ~HEAD_TYPE_IN_DATA;
+      head.type_in_data = 0;
     }
   }
   // String fields
@@ -474,7 +474,7 @@ rapidjson::StringBuffer format_comm_header_json(const comm_head_t head,
   rapidjson::Writer<rapidjson::StringBuffer> head_writer(head_buf);
   head_writer.StartObject();
   // Type
-  if ((!(head.flags & HEAD_TYPE_IN_DATA)) && (!(no_type))) {
+  if ((!(head.type_in_data)) && (!(no_type))) {
     if (head.dtype != NULL) {
       head_writer.Key("datatype");
       head_writer.StartObject();
@@ -501,7 +501,7 @@ rapidjson::StringBuffer format_comm_header_json(const comm_head_t head,
   // Generic things
   head_writer.Key("size");
   head_writer.Int((int)(head.size));
-  if (head.flags & HEAD_TYPE_IN_DATA) {
+  if (head.type_in_data) {
     head_writer.Key("type_in_data");
     head_writer.Bool(true);
   }
@@ -3096,7 +3096,7 @@ extern "C" {
 #endif
       if (ret > max_header_size) {
 	type_buf = format_comm_header_json(*head, no_type, true);
-	head->flags = head->flags | HEAD_TYPE_IN_DATA;
+	head->type_in_data = 1;
 	head->size = head->size + strlen(MSG_HEAD_SEP) + strlen(type_buf.GetString());
 	head_buf = format_comm_header_json(*head, no_type);
 #ifdef _WIN32
@@ -3115,7 +3115,7 @@ extern "C" {
 	buf[0] = (char*)realloc(buf[0], buf_siz);
       }
       // Format
-      if (head->flags & HEAD_TYPE_IN_DATA) {
+      if (head->type_in_data) {
 	ret = snprintf(*buf, buf_siz, "%s%s%s%s%s", MSG_HEAD_SEP,
 		       head_buf.GetString(), MSG_HEAD_SEP,
 		       type_buf.GetString(), MSG_HEAD_SEP);
@@ -3171,7 +3171,7 @@ extern "C" {
       ret = split_head_body(buf, buf_siz, &head, &headsiz);
       if (ret < 0) {
 	ygglog_error("parse_comm_header: Error splitting head and body.");
-	out.flags = out.flags & ~HEAD_FLAG_VALID;
+	out.valid = 0;
 	if (head != NULL) 
 	  free(head);
 	return out;
@@ -3180,7 +3180,7 @@ extern "C" {
       out.bodysiz = buf_siz - out.bodybeg;
       // Handle raw data without header
       if (headsiz == 0) {
-	out.flags = out.flags & ~HEAD_FLAG_MULTIPART;
+	out.multipart = 0;
 	out.size = out.bodysiz;
 	free(head);
 	return out;
@@ -3201,7 +3201,7 @@ extern "C" {
       out.dtype = dtype;
       if (!(update_header_from_doc(out, head_doc))) {
 	ygglog_error("parse_comm_header: Error updating header from JSON doc.");
-	out.flags = out.flags & ~HEAD_FLAG_VALID;
+	out.valid = 0;
 	destroy_dtype(&(out.dtype));
 	out.dtype = NULL;
 	free(head);
@@ -3211,7 +3211,7 @@ extern "C" {
       return out;
     } catch(...) {
       ygglog_error("parse_comm_header: C++ exception thrown.");
-      out.flags = out.flags & ~HEAD_FLAG_VALID;
+      out.valid = 0;
       if (head != NULL)
 	free(head);
       return out;
