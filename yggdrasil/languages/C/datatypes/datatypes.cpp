@@ -185,9 +185,9 @@ bool update_header_from_doc(comm_head_t &head, rapidjson::Value &head_doc) {
   }
   head.size = (size_t)(head_doc["size"].GetInt());
   if (head.bodysiz < head.size) {
-    head.multipart = 1;
+    head.flags = head.flags | HEAD_FLAG_MULTIPART;
   } else {
-    head.multipart = 0;
+    head.flags = head.flags & ~HEAD_FLAG_MULTIPART;
   }
   // Flag specifying that type is in data
   if (head_doc.HasMember("type_in_data")) {
@@ -3180,7 +3180,7 @@ extern "C" {
       out.bodysiz = buf_siz - out.bodybeg;
       // Handle raw data without header
       if (headsiz == 0) {
-	out.multipart = 0;
+	out.flags = out.flags & ~HEAD_FLAG_MULTIPART;
 	out.size = out.bodysiz;
 	free(head);
 	return out;

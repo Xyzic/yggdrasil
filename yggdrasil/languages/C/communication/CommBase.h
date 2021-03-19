@@ -58,7 +58,6 @@ typedef struct comm_t {
   int index_in_register; //!< Index of the comm in the comm register.
   time_t *last_send; //!< Clock output at time of last send.
   void *reply; //!< Reply information.
-  int is_work_comm; //!< Flag specifying if comm is a temporary work comm.
   int thread_id; //!< ID for the thread that created the comm.
   int allow_multiple_comms;
 } comm_t;
@@ -123,7 +122,6 @@ comm_t empty_comm_base() {
   ret.index_in_register = -1;
   ret.last_send = NULL;
   ret.reply = NULL;
-  ret.is_work_comm = 0;
   ret.thread_id = 0;
   ret.allow_multiple_comms = 0;
   return ret;

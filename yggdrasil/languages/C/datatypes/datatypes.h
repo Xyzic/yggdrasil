@@ -69,7 +69,6 @@ typedef char* bytes_t;
   
 /*! @brief Header information passed by comms for multipart messages. */
 typedef struct comm_head_t {
-  int multipart; //!< 1 if message is multipart, 0 if it is not.
   size_t bodysiz; //!< Size of body.
   size_t bodybeg; //!< Start of body in header.
   int flags; //!< Bit flags encoding the status of the header.
@@ -1253,7 +1252,6 @@ static inline
 comm_head_t init_header(const size_t size, const char *address, const char *id) {
   comm_head_t out;
   // Parameters set during read
-  out.multipart = 0;
   out.bodysiz = 0;
   out.bodybeg = 0;
   out.flags = HEAD_FLAG_VALID;

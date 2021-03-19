@@ -662,8 +662,7 @@ comm_head_t comm_send_multipart_header(const comm_t *x, const char * data,
   if (model_name != NULL) {
     strcpy(head.model, model_name);
   }
-  head.flags = head.flags | HEAD_FLAG_VALID;
-  head.multipart = 1;
+  head.flags = head.flags | HEAD_FLAG_VALID | HEAD_FLAG_MULTIPART;
   // Add datatype information to header
   if (!(x->flags & COMM_FLAG_FILE)) {
     dtype_t *datatype;
@@ -759,14 +758,14 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
 	headbuf = t_headbuf;
         headbuf_len = (size_t)headlen + len + 1;
       }
-      head.multipart = 0;
+      head.flags = head.flags & ~HEAD_FLAG_MULTIPART;
       memcpy(headbuf + headlen, data, len);
       headlen += (int)len;
       headbuf[headlen] = '\0';
     }
   }
   // Get head string
-  if (head.multipart == 1) {
+  if (head.flags & HEAD_FLAG_MULTIPART) {
     // Get address for new comm and add to header
     xmulti = new_comm(NULL, "send", x->type, NULL);
     if ((xmulti == NULL) || (!(xmulti->flags & COMM_FLAG_VALID))) {
@@ -775,7 +774,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
       return -1;
     }
     xmulti->const_flags[0] = xmulti->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
-    xmulti->is_work_comm = 1;
+    xmulti->flags = xmulti->flags | COMM_FLAG_WORKER;
     strcpy(head.address, xmulti->address);
     if (xmulti->type == ZMQ_COMM) {
       char *reply_address = set_reply_send(xmulti);
@@ -815,7 +814,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
     free(headbuf);
     return -1;
   }
-  if (head.multipart == 0) {
+  if (!(head.flags & HEAD_FLAG_MULTIPART)) {
     ygglog_debug("comm_send_multipart(%s): %d bytes completed", x->name, head.size);
     free(headbuf);
     return ret;
@@ -1047,7 +1046,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 	return -1;
       }
     }
-    if (head.multipart) {
+    if (head.flags & HEAD_FLAG_MULTIPART) {
       // Return early if header contained entire message
       if (head.size == head.bodysiz) {
         x->const_flags[0] = x->const_flags[0] | COMM_FLAGS_USED;
@@ -1062,7 +1061,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 	return -1;
       }
       xmulti->const_flags[0] = xmulti->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
-      xmulti->is_work_comm = 1;
+      xmulti->flags = xmulti->flags | COMM_FLAG_WORKER;
       if (xmulti->type == ZMQ_COMM) {
 	int reply_socket = set_reply_recv(xmulti, head.zmq_reply_worker);
 	if (reply_socket < 0) {

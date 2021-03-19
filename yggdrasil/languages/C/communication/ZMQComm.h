@@ -580,7 +580,7 @@ int check_reply_recv(const comm_t *comm, char *data, const size_t len) {
   }
   char address[100];
   size_t address_len;
-  if ((comm->is_work_comm == 1) && (zrep->nsockets == 1)) {
+  if ((comm->flags & COMM_FLAG_WORKER) && (zrep->nsockets == 1)) {
     address_len = strlen(zrep->addresses[0]);
     memcpy(address, zrep->addresses[0], address_len);
   } else if (strlen(head.zmq_reply) > 0) {
