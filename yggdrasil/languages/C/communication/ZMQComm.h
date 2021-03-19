@@ -760,7 +760,7 @@ int free_zmq_comm(comm_t *x) {
         ret = zmq_comm_recv(x, &data, data_len, 1);
         if (ret < 0) {
           if (ret == -2) {
-            x->recv_eof[0] = 1;
+	    x->const_flags[0] = x->const_flags[0] | COMM_EOF_RECV;
             break;
           }
         }

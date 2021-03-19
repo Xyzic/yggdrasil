@@ -22,7 +22,7 @@ static unsigned _yggAsciiFilesCreated;
 static inline
 int init_ascii_file_comm(comm_t *comm) {
   // Don't check base validity since address is name
-  comm->is_file = 1;
+  comm->flags = comm->flags | COMM_FLAG_FILE;
   comm->type = ASCII_FILE_COMM;
   strcpy(comm->address, comm->name);
   asciiFile_t *handle = (asciiFile_t*)malloc(sizeof(asciiFile_t));

@@ -22,7 +22,7 @@ static inline
 int init_ascii_table_comm(comm_t *comm) {
   int flag = 0;
   // Don't check base validity since address is name
-  comm->is_file = 1;
+  comm->flags = comm->flags | COMM_FLAG_FILE;
   comm->type = ASCII_TABLE_COMM;
   strcpy(comm->address, comm->name);
   // Initialize table as handle

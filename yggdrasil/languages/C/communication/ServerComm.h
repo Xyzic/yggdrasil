@@ -160,7 +160,7 @@ int server_comm_recv(comm_t* x, char **data, const size_t len, const int allow_r
   }
   // Return EOF
   if (is_eof(*data)) {
-    req_comm->recv_eof[0] = 1;
+    req_comm->const_flags[0] = req_comm->const_flags[0] | COMM_EOF_RECV;
     return ret;
   }
   // Initialize new comm from received address
@@ -171,7 +171,7 @@ int server_comm_recv(comm_t* x, char **data, const size_t len, const int allow_r
   }
   // Return EOF
   if (is_eof((*data) + head.bodybeg)) {
-    req_comm->recv_eof[0] = 1;
+    req_comm->const_flags[0] = req_comm->const_flags[0] | COMM_EOF_RECV;
     return ret;
   }
   // On client sign off, do a second recv
@@ -199,8 +199,7 @@ int server_comm_recv(comm_t* x, char **data, const size_t len, const int allow_r
     ygglog_error("server_comm_recv(%s): Could not initialize response comm.", x->name);
     return newret;
   }
-  res_comm[0]->sent_eof[0] = 1;
-  res_comm[0]->recv_eof[0] = 1;
+  res_comm[0]->const_flags[0] = res_comm[0]->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
   return ret;
 };
 

@@ -60,7 +60,7 @@ int check_threaded_eof(const comm_t* x) {
 	  nthreads++;
 #pragma omp critical (sent_eof)
 	  {
-	    if ((x->sent_eof != NULL) && (x->sent_eof[0] == 0))
+	    if ((x->const_flags != NULL) && (!(x->const_flags[0] & COMM_EOF_SENT)))
 	      out = 0;
 	  }
 	}
@@ -83,11 +83,11 @@ void set_sent_eof(const comm_t* x) {
 #pragma omp critical (sent_eof)
   {
 #endif
-  x->sent_eof[0] = 1;
+  x->const_flags[0] = x->const_flags[0] | COMM_EOF_SENT;
   if (x->type == CLIENT_COMM) {
     comm_t *req_comm = (comm_t*)(x->handle);
     // Don't recurse to prevent block w/ omp critical recursion
-    req_comm->sent_eof[0] = 1;
+    req_comm->const_flags[0] = req_comm->const_flags[0] | COMM_EOF_SENT;
   }
 #ifdef _OPENMP
   }
@@ -774,8 +774,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
       free(headbuf);
       return -1;
     }
-    xmulti->sent_eof[0] = 1;
-    xmulti->recv_eof[0] = 1;
+    xmulti->const_flags[0] = xmulti->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
     xmulti->is_work_comm = 1;
     strcpy(head.address, xmulti->address);
     if (xmulti->type == ZMQ_COMM) {
@@ -896,13 +895,13 @@ int comm_send(const comm_t *x, const char *data, const size_t len) {
     ygglog_error("comm_send: Invalid comm");
     return ret;
   }
-  if (x->sent_eof == NULL) {
-    ygglog_error("comm_send(%s): sent_eof not initialized.", x->name);
+  if (x->const_flags == NULL) {
+    ygglog_error("comm_send(%s): const_flags not initialized.", x->name);
     return ret;
   }
   int sending_eof = 0;
   if (is_eof(data)) {
-    if (x->sent_eof[0]) {
+    if (x->const_flags[0] & COMM_EOF_SENT) {
       ygglog_debug("comm_send(%s): EOF already sent", x->name);
       return ret;
     } else if (!(check_threaded_eof(x))) {
@@ -1018,7 +1017,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
     (*data)[head.bodysiz] = '\0';
     if (is_eof(*data)) {
       ygglog_debug("comm_recv_multipart(%s): EOF received.", x->name);
-      x->recv_eof[0] = 1;
+      x->const_flags[0] = x->const_flags[0] | COMM_EOF_RECV;
       destroy_header(&head);
       return -2;
     }
@@ -1061,8 +1060,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 	destroy_header(&head);
 	return -1;
       }
-      xmulti->sent_eof[0] = 1;
-      xmulti->recv_eof[0] = 1;
+      xmulti->const_flags[0] = xmulti->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
       xmulti->is_work_comm = 1;
       if (xmulti->type == ZMQ_COMM) {
 	int reply_socket = set_reply_recv(xmulti, head.zmq_reply_worker);
@@ -1157,7 +1155,7 @@ int comm_recv(comm_t *x, char *data, const size_t len) {
   if (ret > 0) {
     if (is_eof(data)) {
       ygglog_debug("comm_recv(%s): EOF received.", x->name);
-      x->recv_eof[0] = 1;
+      x->const_flags[0] = x->const_flags[0] | COMM_EOF_RECV;
       ret = -2;
     } else {
       ret = comm_recv_multipart(x, &data, len, ret, 0);
@@ -1184,7 +1182,7 @@ int comm_recv_realloc(comm_t *x, char **data, const size_t len) {
   if (ret > 0) {
     if (is_eof(*data)) {
       ygglog_debug("comm_recv_realloc(%s): EOF received.", x->name);
-      x->recv_eof[0] = 1;
+      x->const_flags[0] = x->const_flags[0] | COMM_EOF_RECV;
       ret = -2;
     } else {
       ret = comm_recv_multipart(x, data, len, ret, 1);
@@ -1215,14 +1213,14 @@ int comm_send_nolimit_eof(const comm_t *x) {
     ygglog_error("comm_send_nolimit_eof: Invalid comm");
     return ret;
   }
-  if (x->sent_eof == NULL) {
-    ygglog_error("comm_send_nolimit_eof(%s): sent_eof not initialized.", x->name);
+  if (x->const_flags == NULL) {
+    ygglog_error("comm_send_nolimit_eof(%s): const_flags not initialized.", x->name);
     return ret;
   }
-  if (x->sent_eof[0] == 0) {
+  if (!(x->const_flags[0] & COMM_EOF_SENT)) {
     char buf[2048] = YGG_MSG_EOF;
     ret = comm_send_nolimit(x, buf, strlen(buf));
-    x->sent_eof[0] = 1;
+    set_sent_eof(x);
   } else {
     ygglog_debug("comm_send_nolimit_eof(%s): EOF already sent", x->name);
   }

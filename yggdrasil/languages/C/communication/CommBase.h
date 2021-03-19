@@ -58,11 +58,8 @@ typedef struct comm_t {
   int always_send_header; //!< 1 if comm should always send a header.
   int index_in_register; //!< Index of the comm in the comm register.
   time_t *last_send; //!< Clock output at time of last send.
-  int *sent_eof; //!< Flag specifying if EOF has been sent
-  int *recv_eof; //!< Flag specifying if EOF has been received.
   int *used; //!< Flag specifying if the comm has been used.
   void *reply; //!< Reply information.
-  int is_file; //!< Flag specifying if the comm connects directly to a file.
   int is_work_comm; //!< Flag specifying if comm is a temporary work comm.
   int is_rpc; //!< Flag specifying if comm is the receiving comm for a client/server request connection.
   int is_global; //!< Flag specifying if the comm is global.
@@ -100,14 +97,6 @@ int free_comm_base(comm_t *x) {
     free(x->const_flags);
     x->const_flags = NULL;
   }
-  if (x->sent_eof != NULL) {
-    free(x->sent_eof);
-    x->sent_eof = NULL;
-  }
-  if (x->recv_eof != NULL) {
-    free(x->recv_eof);
-    x->recv_eof = NULL;
-  }
   if (x->used != NULL) {
     free(x->used);
     x->used = NULL;
@@ -144,11 +133,8 @@ comm_t empty_comm_base() {
   ret.always_send_header = 1;
   ret.index_in_register = -1;
   ret.last_send = NULL;
-  ret.sent_eof = NULL;
-  ret.recv_eof = NULL;
   ret.used = NULL;
   ret.reply = NULL;
-  ret.is_file = 0;
   ret.is_work_comm = 0;
   ret.is_rpc = 0;
   ret.is_global = 0;
@@ -205,18 +191,6 @@ comm_t* new_comm_base(char *address, const char *direction,
     free_comm_base(ret);
     return NULL;
   }
-  ret->sent_eof = (int*)malloc(sizeof(int));
-  if (ret->sent_eof == NULL) {
-    ygglog_error("new_comm_base: Error mallocing sent_eof.");
-    free_comm_base(ret);
-    return NULL;
-  }
-  ret->recv_eof = (int*)malloc(sizeof(int));
-  if (ret->recv_eof == NULL) {
-    ygglog_error("new_comm_base: Error mallocing recv_eof.");
-    free_comm_base(ret);
-    return NULL;
-  }
   ret->used = (int*)malloc(sizeof(int));
   if (ret->used == NULL) {
     ygglog_error("new_comm_base: Error mallocing used.");
@@ -225,8 +199,6 @@ comm_t* new_comm_base(char *address, const char *direction,
   }
   ret->last_send[0] = 0;
   ret->const_flags[0] = 0;
-  ret->sent_eof[0] = 0;
-  ret->recv_eof[0] = 0;
   ret->used[0] = 0;
   ret->thread_id = get_thread_id();
   ret->allow_multiple_comms = 0;

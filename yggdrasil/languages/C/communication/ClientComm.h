@@ -224,8 +224,7 @@ comm_head_t client_response_header(const comm_t* x, comm_head_t head) {
     return head;
   }
   res_comm[0][ncomm]->is_client_response = 1;
-  res_comm[0][ncomm]->sent_eof[0] = 1;
-  res_comm[0][ncomm]->recv_eof[0] = 1;
+  res_comm[0][ncomm]->const_flags[0] = res_comm[0][ncomm]->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;
   inc_client_response_count(x);
   ncomm = get_client_response_count(x);
   ygglog_debug("client_response_header(%s): Created response comm number %d",
@@ -256,7 +255,7 @@ int client_comm_send(const comm_t* x, const char *data, const size_t len) {
   comm_t *req_comm = (comm_t*)(x->handle);
   ret = default_comm_send(req_comm, data, len);
   if (is_eof(data)) {
-    req_comm->sent_eof[0] = 1;
+    req_comm->const_flags[0] = req_comm->const_flags[0] | COMM_EOF_SENT;
   }
   return ret;
 };
