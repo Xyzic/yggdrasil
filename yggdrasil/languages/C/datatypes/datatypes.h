@@ -83,13 +83,11 @@ typedef struct comm_head_t {
   char zmq_reply[COMMBUFFSIZ]; //!< Reply address for ZMQ sockets.
   char zmq_reply_worker[COMMBUFFSIZ]; //!< Reply address for worker socket.
   char model[COMMBUFFSIZ]; //!< Name of model that sent the header.
-  int type_in_data; //!< 1 if type is stored with the data during serialization.
   // These should be removed once JSON fully implemented
   int serializer_type; //!< Code indicating the type of serializer.
   char format_str[COMMBUFFSIZ]; //!< Format string for serializer.
   char field_names[COMMBUFFSIZ]; //!< String containing field names.
   char field_units[COMMBUFFSIZ]; //!< String containing field units.
-  int as_array; //!< 1 if messages will be serialized arrays.
   //
   dtype_t* dtype; //!< Type structure.
 } comm_head_t;
@@ -1260,7 +1258,6 @@ comm_head_t init_header(const size_t size, const char *address, const char *id) 
   out.bodybeg = 0;
   out.flags = HEAD_FLAG_VALID;
   out.nargs_populated = 0;
-  out.type_in_data = 0;
   // Parameters sent in header
   out.size = size;
   if (address == NULL)
@@ -1279,7 +1276,6 @@ comm_head_t init_header(const size_t size, const char *address, const char *id) 
   // Parameters that will be removed
   out.serializer_type = -1;
   out.format_str[0] = '\0';
-  out.as_array = 0;
   // Parameters used for type
   out.dtype = NULL;
   return out;

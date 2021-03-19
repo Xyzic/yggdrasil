@@ -57,7 +57,6 @@ typedef struct comm_t {
   size_t msgBufSize; //!< The size that should be reserved in messages.
   int index_in_register; //!< Index of the comm in the comm register.
   time_t *last_send; //!< Clock output at time of last send.
-  int *used; //!< Flag specifying if the comm has been used.
   void *reply; //!< Reply information.
   int is_work_comm; //!< Flag specifying if comm is a temporary work comm.
   int thread_id; //!< ID for the thread that created the comm.
@@ -92,10 +91,6 @@ int free_comm_base(comm_t *x) {
     free(x->const_flags);
     x->const_flags = NULL;
   }
-  if (x->used != NULL) {
-    free(x->used);
-    x->used = NULL;
-  }
   if (x->datatype != NULL) {
     destroy_dtype(&(x->datatype));
     x->datatype = NULL;
@@ -127,7 +122,6 @@ comm_t empty_comm_base() {
   ret.msgBufSize = 0;
   ret.index_in_register = -1;
   ret.last_send = NULL;
-  ret.used = NULL;
   ret.reply = NULL;
   ret.is_work_comm = 0;
   ret.thread_id = 0;
@@ -181,15 +175,8 @@ comm_t* new_comm_base(char *address, const char *direction,
     free_comm_base(ret);
     return NULL;
   }
-  ret->used = (int*)malloc(sizeof(int));
-  if (ret->used == NULL) {
-    ygglog_error("new_comm_base: Error mallocing used.");
-    free_comm_base(ret);
-    return NULL;
-  }
   ret->last_send[0] = 0;
   ret->const_flags[0] = 0;
-  ret->used[0] = 0;
   ret->thread_id = get_thread_id();
   ret->allow_multiple_comms = 0;
   char *allow_threading = getenv("YGG_THREADING");

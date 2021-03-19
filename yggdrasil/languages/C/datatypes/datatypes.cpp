@@ -196,9 +196,9 @@ bool update_header_from_doc(comm_head_t &head, rapidjson::Value &head_doc) {
       return false;
     }
     if (head_doc["type_in_data"].GetBool()) {
-      head.type_in_data = 1;
+      head.flags = head.flags | HEAD_TYPE_IN_DATA;
     } else {
-      head.type_in_data = 0;
+      head.flags = head.flags & ~HEAD_TYPE_IN_DATA;
     }
   }
   // String fields
@@ -474,7 +474,7 @@ rapidjson::StringBuffer format_comm_header_json(const comm_head_t head,
   rapidjson::Writer<rapidjson::StringBuffer> head_writer(head_buf);
   head_writer.StartObject();
   // Type
-  if ((!(head.type_in_data)) && (!(no_type))) {
+  if ((!(head.flags & HEAD_TYPE_IN_DATA)) && (!(no_type))) {
     if (head.dtype != NULL) {
       head_writer.Key("datatype");
       head_writer.StartObject();
@@ -501,7 +501,7 @@ rapidjson::StringBuffer format_comm_header_json(const comm_head_t head,
   // Generic things
   head_writer.Key("size");
   head_writer.Int((int)(head.size));
-  if (head.type_in_data) {
+  if (head.flags & HEAD_TYPE_IN_DATA) {
     head_writer.Key("type_in_data");
     head_writer.Bool(true);
   }
@@ -3096,7 +3096,7 @@ extern "C" {
 #endif
       if (ret > max_header_size) {
 	type_buf = format_comm_header_json(*head, no_type, true);
-	head->type_in_data = 1;
+	head->flags = head->flags | HEAD_TYPE_IN_DATA;
 	head->size = head->size + strlen(MSG_HEAD_SEP) + strlen(type_buf.GetString());
 	head_buf = format_comm_header_json(*head, no_type);
 #ifdef _WIN32
@@ -3115,7 +3115,7 @@ extern "C" {
 	buf[0] = (char*)realloc(buf[0], buf_siz);
       }
       // Format
-      if (head->type_in_data) {
+      if (head->flags & HEAD_TYPE_IN_DATA) {
 	ret = snprintf(*buf, buf_siz, "%s%s%s%s%s", MSG_HEAD_SEP,
 		       head_buf.GetString(), MSG_HEAD_SEP,
 		       type_buf.GetString(), MSG_HEAD_SEP);
