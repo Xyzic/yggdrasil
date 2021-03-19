@@ -57,7 +57,7 @@ int init_server_comm(comm_t *comm) {
   // 	 handle->name, handle->type, handle->address);
   strcpy(comm->direction, "recv");
   comm->handle = (void*)handle;
-  comm->always_send_header = 1;
+  comm->flags = comm->flags | COMM_ALWAYS_SEND_HEADER;
   comm_t **info = (comm_t**)malloc(sizeof(comm_t*));
   if (info == NULL) {
     ygglog_error("init_server_comm: Failed to malloc info.");
@@ -165,7 +165,7 @@ int server_comm_recv(comm_t* x, char **data, const size_t len, const int allow_r
   }
   // Initialize new comm from received address
   comm_head_t head = parse_comm_header(*data, ret);
-  if (!(head.valid)) {
+  if (!(head.flags & HEAD_FLAG_VALID)) {
     ygglog_error("server_comm_recv(%s): Error parsing header.", x->name);
     return -1;
   }

@@ -73,7 +73,6 @@ typedef struct comm_head_t {
   size_t bodysiz; //!< Size of body.
   size_t bodybeg; //!< Start of body in header.
   int flags; //!< Bit flags encoding the status of the header.
-  int valid; //!< 1 if the header is valid, 0 otherwise.
   int nargs_populated; //!< Number of arguments populated during deserialization.
   //
   size_t size; //!< Size of incoming message.
@@ -1260,7 +1259,6 @@ comm_head_t init_header(const size_t size, const char *address, const char *id) 
   out.bodysiz = 0;
   out.bodybeg = 0;
   out.flags = HEAD_FLAG_VALID;
-  out.valid = 1;
   out.nargs_populated = 0;
   out.type_in_data = 0;
   // Parameters sent in header

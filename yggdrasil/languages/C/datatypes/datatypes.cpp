@@ -3171,7 +3171,7 @@ extern "C" {
       ret = split_head_body(buf, buf_siz, &head, &headsiz);
       if (ret < 0) {
 	ygglog_error("parse_comm_header: Error splitting head and body.");
-	out.valid = 0;
+	out.flags = out.flags & ~HEAD_FLAG_VALID;
 	if (head != NULL) 
 	  free(head);
 	return out;
@@ -3201,7 +3201,7 @@ extern "C" {
       out.dtype = dtype;
       if (!(update_header_from_doc(out, head_doc))) {
 	ygglog_error("parse_comm_header: Error updating header from JSON doc.");
-	out.valid = 0;
+	out.flags = out.flags & ~HEAD_FLAG_VALID;
 	destroy_dtype(&(out.dtype));
 	out.dtype = NULL;
 	free(head);
@@ -3211,7 +3211,7 @@ extern "C" {
       return out;
     } catch(...) {
       ygglog_error("parse_comm_header: C++ exception thrown.");
-      out.valid = 0;
+      out.flags = out.flags & ~HEAD_FLAG_VALID;
       if (head != NULL)
 	free(head);
       return out;

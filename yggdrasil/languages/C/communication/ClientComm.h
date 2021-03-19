@@ -91,7 +91,7 @@ int init_client_comm(comm_t *comm) {
   ncomm[0] = 0;
   handle->info = (void*)ncomm;
   strcpy(comm->direction, "send");
-  comm->always_send_header = 1;
+  comm->flags = comm->flags | COMM_ALWAYS_SEND_HEADER;
   comm_t ***info = (comm_t***)malloc(sizeof(comm_t**));
   if (info == NULL) {
     ygglog_error("init_client_comm: Failed to malloc info.");
@@ -212,7 +212,7 @@ comm_head_t client_response_header(const comm_t* x, comm_head_t head) {
   res_comm[0] = (comm_t**)realloc(res_comm[0], sizeof(comm_t*)*(ncomm + 1));
   if (res_comm[0] == NULL) {
     ygglog_error("client_response_header: Failed to realloc response comm.");
-    head.valid = 0;
+    head.flags = head.flags & ~HEAD_FLAG_VALID;
     return head;
   }
   dtype_t * dtype_copy = copy_dtype(x->datatype);
@@ -221,7 +221,7 @@ comm_head_t client_response_header(const comm_t* x, comm_head_t head) {
   int ret = new_default_address(res_comm[0][ncomm]);
   if (ret < 0) {
     ygglog_error("client_response_header(%s): could not create response comm", x->name);
-    head.valid = 0;
+    head.flags = head.flags & ~HEAD_FLAG_VALID;
     return head;
   }
   res_comm[0][ncomm]->const_flags[0] = res_comm[0][ncomm]->const_flags[0] | COMM_EOF_SENT | COMM_EOF_RECV;

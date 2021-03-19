@@ -574,7 +574,7 @@ int check_reply_recv(const comm_t *comm, char *data, const size_t len) {
   zrep->n_msg++;
   // Extract address
   comm_head_t head = parse_comm_header(data, len);
-  if (head.valid == 0) {
+  if (!(head.flags & HEAD_FLAG_VALID)) {
     ygglog_error("check_reply_recv(%s): Invalid header.", comm->name);
     return -1;
   }
@@ -737,7 +737,7 @@ int init_zmq_comm(comm_t *comm) {
   // Asign to void pointer
   comm->handle = (void*)s;
   ret = init_zmq_reply(comm);
-  comm->always_send_header = 1;
+  comm->flags = comm->flags | COMM_ALWAYS_SEND_HEADER;
   return ret;
 };
 

@@ -55,7 +55,6 @@ typedef struct comm_t {
   dtype_t *datatype; //!< Data type for comm messages.
   size_t maxMsgSize; //!< The maximum message size.
   size_t msgBufSize; //!< The size that should be reserved in messages.
-  int always_send_header; //!< 1 if comm should always send a header.
   int index_in_register; //!< Index of the comm in the comm register.
   time_t *last_send; //!< Clock output at time of last send.
   int *used; //!< Flag specifying if the comm has been used.
@@ -126,7 +125,6 @@ comm_t empty_comm_base() {
   ret.datatype = NULL;
   ret.maxMsgSize = 0;
   ret.msgBufSize = 0;
-  ret.always_send_header = 1;
   ret.index_in_register = -1;
   ret.last_send = NULL;
   ret.used = NULL;

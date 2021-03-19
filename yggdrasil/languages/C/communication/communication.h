@@ -662,8 +662,8 @@ comm_head_t comm_send_multipart_header(const comm_t *x, const char * data,
   if (model_name != NULL) {
     strcpy(head.model, model_name);
   }
+  head.flags = head.flags | HEAD_FLAG_VALID;
   head.multipart = 1;
-  head.valid = 1;
   // Add datatype information to header
   if (!(x->flags & COMM_FLAG_FILE)) {
     dtype_t *datatype;
@@ -681,7 +681,7 @@ comm_head_t comm_send_multipart_header(const comm_t *x, const char * data,
     if (res_comm[0] == NULL) {
       ygglog_error("comm_send_multipart_header(%s): no response comm registered",
 		   x->name);
-      head.valid = 0;
+      head.flags = head.flags & ~HEAD_FLAG_VALID;
       return head;
     }
     x0 = &((*res_comm)[0]);
@@ -700,7 +700,7 @@ comm_head_t comm_send_multipart_header(const comm_t *x, const char * data,
     char *reply_address = set_reply_send(x0);
     if (reply_address == NULL) {
       ygglog_error("comm_send_multipart_header: Could not set reply address.");
-      head.valid = 0;
+      head.flags = head.flags & ~HEAD_FLAG_VALID;
       return head;
     }
     strcpy(head.zmq_reply, reply_address);
@@ -729,7 +729,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
   }
   // Get header
   comm_head_t head = comm_send_multipart_header(x, data, len);
-  if (head.valid == 0) {
+  if (!(head.flags & HEAD_FLAG_VALID)) {
     ygglog_error("comm_send_multipart: Invalid header generated.");
     return -1;
   }
@@ -915,7 +915,7 @@ int comm_send(const comm_t *x, const char *data, const size_t len) {
     }
   }
   if (((len > x->maxMsgSize) && (x->maxMsgSize > 0)) ||
-      (((x->always_send_header) || (x->used[0] == 0)))) {
+      (((x->flags & COMM_ALWAYS_SEND_HEADER) || (x->used[0] == 0)))) {
     ygglog_debug("comm_send(%s): Sending as one or more messages with a header.",
 		 x->name);
     ret = comm_send_multipart(x, data, len);
@@ -1008,7 +1008,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
   }
   usleep(100);
   comm_head_t head = parse_comm_header(*data, headlen);
-  if (!(head.valid)) {
+  if (!(head.flags & HEAD_FLAG_VALID)) {
     ygglog_error("comm_recv_multipart(%s): Error parsing header.", x->name);
     ret = -1;
   } else {
