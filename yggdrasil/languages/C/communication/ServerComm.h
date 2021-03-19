@@ -50,7 +50,7 @@ int init_server_comm(comm_t *comm) {
   } else {
     handle = init_comm_base(comm->name, "recv", _default_comm, dtype_in);
   }
-  handle->is_rpc = 1;
+  handle->flags = handle->flags | COMM_FLAG_SERVER;
   ret = init_default_comm(handle);
   strcpy(comm->address, handle->address);
   // printf("init_server_comm: name = %s, type=%d, address = %s\n",

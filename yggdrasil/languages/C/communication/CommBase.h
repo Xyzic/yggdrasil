@@ -61,11 +61,8 @@ typedef struct comm_t {
   int *used; //!< Flag specifying if the comm has been used.
   void *reply; //!< Reply information.
   int is_work_comm; //!< Flag specifying if comm is a temporary work comm.
-  int is_rpc; //!< Flag specifying if comm is the receiving comm for a client/server request connection.
   int thread_id; //!< ID for the thread that created the comm.
   int allow_multiple_comms;
-  int is_client;
-  int is_client_response;
 } comm_t;
 
 
@@ -135,11 +132,8 @@ comm_t empty_comm_base() {
   ret.used = NULL;
   ret.reply = NULL;
   ret.is_work_comm = 0;
-  ret.is_rpc = 0;
   ret.thread_id = 0;
   ret.allow_multiple_comms = 0;
-  ret.is_client = 0;
-  ret.is_client_response = 0;
   return ret;
 };
 

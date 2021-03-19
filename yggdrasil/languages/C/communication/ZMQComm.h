@@ -661,7 +661,7 @@ int new_zmq_address(comm_t *comm) {
   }
   // Bind
   zsock_t *s = NULL;
-  if (comm->is_client_response) {
+  if (comm->flags & COMM_FLAG_CLIENT_RESPONSE) {
     s = ygg_zsock_new(ZMQ_ROUTER);
   } else if (comm->allow_multiple_comms) {
     s = ygg_zsock_new(ZMQ_DEALER);
@@ -714,7 +714,7 @@ int init_zmq_comm(comm_t *comm) {
     return ret;
   comm->msgBufSize = 100;
   zsock_t *s;
-  if (comm->is_rpc || comm->allow_multiple_comms) {
+  if ((comm->flags & COMM_FLAG_SERVER) || comm->allow_multiple_comms) {
     s = ygg_zsock_new(ZMQ_DEALER);
   } else {
     s = ygg_zsock_new(ZMQ_PAIR);
@@ -921,7 +921,7 @@ int zmq_comm_recv(const comm_t* x, char **data, const size_t len,
     }
   }
   zframe_t *out = NULL;
-  if (x->is_client_response) {
+  if (x->flags & COMM_FLAG_CLIENT_RESPONSE) {
     out = zframe_recv(s);
     if (out == NULL) {
       ygglog_debug("zmq_comm_recv(%s): did not receive identity", x->name);
