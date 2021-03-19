@@ -77,7 +77,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->is_global)) {
+    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
       ygg_free(_pi);
     }
     _pi = NULL;
@@ -249,7 +249,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->is_global)) {
+    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
       ygg_free(_pi);
     }
     _pi = NULL;
@@ -355,7 +355,7 @@ public:
     @brief Alias to allow freeing of underlying C struct at the class level.
   */
   void _destroy_pi() {
-    if (!(_pi->is_global)) {
+    if (!(_pi->flags & COMM_FLAG_GLOBAL)) {
       ygg_free(_pi);
     }
     _pi = NULL;

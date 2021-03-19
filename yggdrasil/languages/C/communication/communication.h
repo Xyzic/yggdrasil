@@ -513,7 +513,7 @@ comm_t* init_comm(const char *name, const char *direction,
   }
   if (ret->flags & COMM_FLAG_VALID) {
     if (global_scope_comm) {
-      ret->is_global = 1;
+      ret->flags = ret->flags | COMM_FLAG_GLOBAL;
       ygglog_debug("init_comm(%s): Global comm!", name);
     }
     ygglog_debug("init_comm(%s): Initialized comm.", name);
