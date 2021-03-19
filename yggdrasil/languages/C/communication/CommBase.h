@@ -59,7 +59,6 @@ typedef struct comm_t {
   time_t *last_send; //!< Clock output at time of last send.
   void *reply; //!< Reply information.
   int thread_id; //!< ID for the thread that created the comm.
-  int allow_multiple_comms;
 } comm_t;
 
 
@@ -123,7 +122,6 @@ comm_t empty_comm_base() {
   ret.last_send = NULL;
   ret.reply = NULL;
   ret.thread_id = 0;
-  ret.allow_multiple_comms = 0;
   return ret;
 };
 
@@ -176,10 +174,9 @@ comm_t* new_comm_base(char *address, const char *direction,
   ret->last_send[0] = 0;
   ret->const_flags[0] = 0;
   ret->thread_id = get_thread_id();
-  ret->allow_multiple_comms = 0;
   char *allow_threading = getenv("YGG_THREADING");
   if (allow_threading != NULL) {
-    ret->allow_multiple_comms = 1;
+    ret->flags = ret->flags | COMM_ALLOW_MULTIPLE_COMMS;
   }
   return ret;
 };

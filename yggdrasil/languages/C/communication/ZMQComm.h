@@ -663,7 +663,7 @@ int new_zmq_address(comm_t *comm) {
   zsock_t *s = NULL;
   if (comm->flags & COMM_FLAG_CLIENT_RESPONSE) {
     s = ygg_zsock_new(ZMQ_ROUTER);
-  } else if (comm->allow_multiple_comms) {
+  } else if (comm->flags & COMM_ALLOW_MULTIPLE_COMMS) {
     s = ygg_zsock_new(ZMQ_DEALER);
   } else {
     s = ygg_zsock_new(ZMQ_PAIR);
@@ -714,7 +714,7 @@ int init_zmq_comm(comm_t *comm) {
     return ret;
   comm->msgBufSize = 100;
   zsock_t *s;
-  if ((comm->flags & COMM_FLAG_SERVER) || comm->allow_multiple_comms) {
+  if (comm->flags & (COMM_FLAG_SERVER | COMM_ALLOW_MULTIPLE_COMMS)) {
     s = ygg_zsock_new(ZMQ_DEALER);
   } else {
     s = ygg_zsock_new(ZMQ_PAIR);
