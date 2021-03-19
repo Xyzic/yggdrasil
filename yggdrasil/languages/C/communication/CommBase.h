@@ -85,10 +85,17 @@ int free_comm_base(comm_t *x) {
     free(x->last_send);
     x->last_send = NULL;
   }
+#ifdef _OPENMP
+#pragma omp critical (const_flags)
+  {
+#endif
   if (x->const_flags != NULL) {
     free(x->const_flags);
     x->const_flags = NULL;
   }
+#ifdef _OPENMP
+  }
+#endif
   if (x->datatype != NULL) {
     destroy_dtype(&(x->datatype));
     x->datatype = NULL;
@@ -113,6 +120,7 @@ comm_t empty_comm_base() {
   ret.address[0] = '\0';
   ret.direction[0] = '\0';
   ret.flags = COMM_ALWAYS_SEND_HEADER;
+  ret.const_flags = NULL;
   ret.handle = NULL;
   ret.info = NULL;
   ret.datatype = NULL;
