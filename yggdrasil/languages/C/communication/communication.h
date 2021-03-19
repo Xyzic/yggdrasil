@@ -800,7 +800,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
   }
   // Send header
   size_t data_in_header = 0;
-  if ((head.type_in_data) && ((size_t)headlen > (x->maxMsgSize - x->msgBufSize))) {
+  if ((head.flags & HEAD_TYPE_IN_DATA) && ((size_t)headlen > (x->maxMsgSize - x->msgBufSize))) {
     ret = comm_send_single(x, headbuf, x->maxMsgSize - x->msgBufSize);
     data_in_header = headlen - (x->maxMsgSize - x->msgBufSize);
   } else {
@@ -1029,7 +1029,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
     } else {
       updtype = x->datatype;
     }
-    if ((!(x->const_flags[0] & COMM_FLAGS_USED)) && (!(x->flags & COMM_FLAG_FILE)) && (updtype->obj == NULL) && (!(head.type_in_data))) {
+    if ((!(x->const_flags[0] & COMM_FLAGS_USED)) && (!(x->flags & COMM_FLAG_FILE)) && (updtype->obj == NULL) && (!(head.flags & HEAD_TYPE_IN_DATA))) {
       ygglog_debug("comm_recv_multipart(%s): Updating datatype to '%s'",
 		   x->name, head.dtype->type);
       ret = update_dtype(updtype, head.dtype);
@@ -1109,7 +1109,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 	ygglog_debug("comm_recv_multipart(%s): %d of %d bytes received",
 		     x->name, prev, head.size);
       }
-      if ((ret > 0) && (head.type_in_data)) {
+      if ((ret > 0) && (head.flags & HEAD_TYPE_IN_DATA)) {
 	ygglog_debug("comm_recv_multipart(%s): Extracting type from data.");
 	ret = parse_type_in_data(data, prev, &head);
 	if (ret > 0) {
