@@ -665,7 +665,7 @@ comm_head_t comm_send_multipart_header(const comm_t *x, const char * data,
   head.multipart = 1;
   head.valid = 1;
   // Add datatype information to header
-  if (x->is_file == 0) {
+  if (!(x->flags & COMM_FLAG_FILE)) {
     dtype_t *datatype;
     if (x->type == CLIENT_COMM) {
       comm_t *req_comm = (comm_t*)(x->handle);
@@ -1029,7 +1029,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
     } else {
       updtype = x->datatype;
     }
-    if ((x->used[0] == 0) && (x->is_file == 0) && (updtype->obj == NULL) && (head.type_in_data == 0)) {
+    if ((x->used[0] == 0) && (!(x->flags & COMM_FLAG_FILE)) && (updtype->obj == NULL) && (head.type_in_data == 0)) {
       ygglog_debug("comm_recv_multipart(%s): Updating datatype to '%s'",
 		   x->name, head.dtype->type);
       ret = update_dtype(updtype, head.dtype);
@@ -1038,7 +1038,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 	destroy_header(&head);
 	return -1;
       }
-    } else if ((x->is_file == 0) && (head.dtype != NULL)) {
+    } else if ((!(x->flags & COMM_FLAG_FILE)) && (head.dtype != NULL)) {
       ret = update_dtype(updtype, head.dtype);
       if (ret != 0) {
 	ygglog_error("comm_recv_multipart(%s): Error updating existing datatype.", x->name);
