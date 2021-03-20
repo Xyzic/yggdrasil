@@ -37,14 +37,6 @@ static size_t global_scope_comm = 0;
 #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm = 1; COMM; global_scope_comm = 0
 #endif
 
-static
-void check_used(const comm_t* x, const char* src) {
-  if ((x->used[0]) && (!(x->const_flags[0] & COMM_FLAGS_USED)))
-    ygglog_error("check_used: disagreement (1st) -> %s", src);
-  else if ((!(x->used[0])) && (x->const_flags[0] & COMM_FLAGS_USED))
-    ygglog_error("check_used: disagreement (2nd) -> %s", src);
-};
-
 
 /*!
  @brief Check if EOF should be sent for a comm being used on multiple threads.
@@ -909,9 +901,7 @@ int comm_send_multipart(const comm_t *x, const char *data, const size_t len) {
       ygglog_error("comm_send_multipart(%s): const_flags not initialized.", x->name);
       ret = -1;
     } else {
-      x->used[0] = 1;
       x->const_flags[0] = x->const_flags[0] | COMM_FLAGS_USED;
-      check_used(x, "comm_send_multipart");
     }
   }
 #ifdef _OPENMP
@@ -946,10 +936,8 @@ int comm_send(const comm_t *x, const char *data, const size_t len) {
     ygglog_error("comm_send(%s): const_flags not initialized.", x->name);
     return ret;
   } else {
-    /* used = x->used[0]; */
     used = x->const_flags[0] & COMM_FLAGS_USED;
     sent_eof = x->const_flags[0] & COMM_EOF_SENT;
-    check_used(x, "comm_send");
   }
 #ifdef _OPENMP
   }
@@ -987,9 +975,7 @@ int comm_send(const comm_t *x, const char *data, const size_t len) {
   {
 #endif
   if (ret >= 0)
-    x->used[0] = 1;
     x->const_flags[0] = x->const_flags[0] | COMM_FLAGS_USED;
-    check_used(x, "comm_send (set)");
 #ifdef _OPENMP
   }
 #endif
@@ -1079,9 +1065,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
     ygglog_error("comm_recv_multipart(%s): const_flags not initialized.", x->name);
     return ret;
   } else {
-    /* used = x->used[0]; */
     used = x->const_flags[0] & COMM_FLAGS_USED;
-    check_used(x, "comm_recv_multipart");
   }
 #ifdef _OPENMP
   }
@@ -1140,9 +1124,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
 #pragma omp critical (const_flags)
   {
 #endif
-        x->used[0] = 1;
         x->const_flags[0] = x->const_flags[0] | COMM_FLAGS_USED;
-	check_used(x, "comm_recv_multipart (set, no header)");
 #ifdef _OPENMP
   }
 #endif
@@ -1246,9 +1228,7 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
   {
 #endif
   if (ret >= 0)
-    x->used[0] = 1;
     x->const_flags[0] = x->const_flags[0] | COMM_FLAGS_USED;
-    check_used(x, "comm_recv_multipart (set)");
 #ifdef _OPENMP
   }
 #endif
