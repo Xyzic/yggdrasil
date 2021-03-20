@@ -44,7 +44,7 @@ jobs:
         install-method:
         - pip
         test-flags1:
-        - --with-examples --long-running yggdrasil/examples/tests/test_types.py::TestExampleTypes::test_cpp_class_run_example
+        - --with-examples --long-running --nocapture yggdrasil/examples/tests/test_types.py::TestExampleTypes::test_cpp_class_run_example
         test-flags2:
         - ''
         install-c:

@@ -946,8 +946,8 @@ int comm_send(const comm_t *x, const char *data, const size_t len) {
     ygglog_error("comm_send(%s): const_flags not initialized.", x->name);
     return ret;
   } else {
-    used = x->used[0];
-    /* used = x->const_flags[0] & COMM_FLAGS_USED; */
+    /* used = x->used[0]; */
+    used = x->const_flags[0] & COMM_FLAGS_USED;
     sent_eof = x->const_flags[0] & COMM_EOF_SENT;
     check_used(x, "comm_send");
   }
@@ -1079,8 +1079,8 @@ int comm_recv_multipart(comm_t *x, char **data, const size_t len,
     ygglog_error("comm_recv_multipart(%s): const_flags not initialized.", x->name);
     return ret;
   } else {
-    used = x->used[0];
-    /* used = x->const_flags[0] & COMM_FLAGS_USED; */
+    /* used = x->used[0]; */
+    used = x->const_flags[0] & COMM_FLAGS_USED;
     check_used(x, "comm_recv_multipart");
   }
 #ifdef _OPENMP
