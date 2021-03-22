@@ -97,6 +97,10 @@ int free_comm_base(comm_t *x) {
 #ifdef _OPENMP
   }
 #endif
+  if (x->used != NULL) {
+    free(x->used);
+    x->used = NULL;
+  }
   if (x->datatype != NULL) {
     destroy_dtype(&(x->datatype));
     x->datatype = NULL;
@@ -129,6 +133,7 @@ comm_t empty_comm_base() {
   ret.msgBufSize = 0;
   ret.index_in_register = -1;
   ret.last_send = NULL;
+  ret.used = NULL;
   ret.reply = NULL;
   ret.thread_id = 0;
   return ret;
@@ -180,8 +185,15 @@ comm_t* new_comm_base(char *address, const char *direction,
     free_comm_base(ret);
     return NULL;
   }
+  ret->used = (int*)malloc(sizeof(int));
+  if (ret->used == NULL) {
+    ygglog_error("new_comm_base: Error mallocing used.");
+    free_comm_base(ret);
+    return NULL;
+  }
   ret->last_send[0] = 0;
   ret->const_flags[0] = 0;
+  ret->used[0] = 0;
   ret->thread_id = get_thread_id();
   char *allow_threading = getenv("YGG_THREADING");
   if (allow_threading != NULL) {
