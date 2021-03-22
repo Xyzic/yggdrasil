@@ -1217,6 +1217,7 @@ class ModelDriver(Driver):
             env[k.replace(':', '__COLON__')] = env.pop(k)
         if ygg_cfg.get('general', 'allow_multiple_omp', False):
             env['KMP_DUPLICATE_LIB_OK'] = 'True'
+        self.info("Env:\n%s" % self.pprint(env))
         return env
 
     def before_start(self, no_queue_thread=False, **kwargs):
