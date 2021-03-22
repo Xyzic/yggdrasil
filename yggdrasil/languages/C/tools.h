@@ -312,6 +312,15 @@ int init_python_API() {
 	PyMem_RawFree(wname);
       }
     }
+    printf("Py_GetProgramName: %ls\nPy_GetPrefix: %ls\nPy_GetExecPrefix: %ls\nPy_GetProgramFullPath: %ls\nPy_GetPath: %ls\nPy_GetPythonHome: %ls\n",
+	   Py_GetProgramName(),
+	   Py_GetPrefix(),
+	   Py_GetExecPrefix(),
+	   Py_GetProgramFullPath(),
+	   Py_GetPath(),
+	   Py_GetPythonHome());
+    fflush(stdout);
+    sleep(1);
     if (out >= 0) {
       Py_Initialize();
       if (!(Py_IsInitialized()))
