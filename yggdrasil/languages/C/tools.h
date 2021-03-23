@@ -309,21 +309,21 @@ int init_python_API() {
 	out = -1;
       } else {
 	printf("before:%s\nafter%ls\n", name, wname);
-	Py_SetProgramName(wname);
+	/* Py_SetProgramName(wname); */
 	PyMem_RawFree(wname);
       }
     }
-    printf("Py_GetProgramName: %ls\nPy_GetPrefix: %ls\nPy_GetExecPrefix: %ls\nPy_GetProgramFullPath: %ls\nPy_GetPath: %ls\nPy_GetPythonHome: %ls\n",
-	   Py_GetProgramName(),
-	   Py_GetPrefix(),
-	   Py_GetExecPrefix(),
-	   Py_GetProgramFullPath(),
-	   Py_GetPath(),
-	   Py_GetPythonHome());
-    fflush(stdout);
-    sleep(1);
     if (out >= 0) {
       Py_Initialize();
+      printf("Py_GetProgramName: %ls\nPy_GetPrefix: %ls\nPy_GetExecPrefix: %ls\nPy_GetProgramFullPath: %ls\nPy_GetPath: %ls\nPy_GetPythonHome: %ls\n",
+	     Py_GetProgramName(),
+	     Py_GetPrefix(),
+	     Py_GetExecPrefix(),
+	     Py_GetProgramFullPath(),
+	     Py_GetPath(),
+	     Py_GetPythonHome());
+      fflush(stdout);
+      sleep(1);
       if (!(Py_IsInitialized()))
 	out = -1;
     }
