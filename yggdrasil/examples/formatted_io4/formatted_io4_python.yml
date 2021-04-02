@@ -22,5 +22,5 @@ connections:
     output: inputA
     filetype: pandas
   - input: outputB  # Connection between model B output and file
-    output: ./output.txt
+    output: ./output.csv
     filetype: pandas
