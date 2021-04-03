@@ -21,8 +21,10 @@ connections:
   - input: ./Input/input.txt  # Connection between file and model A input
     output: inputA
     as_array: True
+    delimiter: ","
     filetype: table
   - input: outputB  # Connection between model B output and file
     output: ./output.txt
     as_array: True
+    delimiter: ","
     filetype: table

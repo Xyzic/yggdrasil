@@ -4,7 +4,7 @@ from yggdrasil.interface.YggInterface import (
 
 # Initialize input/output channels
 in_channel = YggAsciiArrayInput('inputB')
-out_channel = YggAsciiArrayOutput('outputB', '%6s\t%d\t%f\n')
+out_channel = YggAsciiArrayOutput('outputB', '%6s,%d,%f\n')
 
 # Loop until there is no longer input or the queues are closed
 while True:
